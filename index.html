@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Conversor de Monedas Nacionales</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,700;1,400&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- CSS Rockketz -->
+    <link rel="stylesheet" href="./assets/css/style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="box">
+        <div class="header">
+          <h1>Conversor de Monedas Nacional</h1>
+        </div>
+        <div class="conversor">
+          <article class="grupo">
+            <h3>Pesos CLP</h3>
+            <input
+              type="number"
+              placeholder="Ingrese el monto en CLP"
+              id="cifra"
+            />
+            <p>Moneda a Convertir:</p>
+            <select id="moneda">
+              <option value="">-- Seleccione Moneda --</option>
+              <option value="dolar">Dolares</option>
+              <option value="euro">Euros</option>
+            </select>
+            <button id="calcular">Buscar</button>
+            <p id="resultado">...</p>
+            <p id="test"></p>
+          </article>
+        </div>
+      </div>
+      <div class="grafico">
+        <h2>Gráfico <span id="identificador"></span></h2>
+        <canvas id="myChart"> </canvas>
+      </div>
+    </div>
+
+    <script src="./assets/js/main.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+      const btn = document.getElementById("calcular");
+      const contenedor = document.querySelector(".container");
+
+      btn.addEventListener("click", () => {
+        const input = document.querySelector("#moneda");
+        const valorDolarApi = `https://mindicador.cl/api/${input.value}`;
+
+        const ctx = document.getElementById("myChart");
+
+        fetch(valorDolarApi)
+          .then((response) => response.json())
+          .then((data) => {
+            console.log(data.serie);
+            const fechas = [];
+            const valores = [];
+
+            data.serie.forEach((element) => {
+              // Convertir la fecha a un objeto Date
+              const fechaObjeto = new Date(element.fecha);
+
+              // Formatear la fecha
+              const formato = new Intl.DateTimeFormat("es-CL", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+              }).format(fechaObjeto);
+
+              fechas.push(formato); // Agregar la fecha formateada al arreglo
+              valores.push(element.valor); // Agregar el valor al arreglo
+            });
+
+            // Crear el gráfico
+            new Chart(ctx, {
+              type: "line",
+              data: {
+                // Mostrar solo 10 fechas
+                labels: fechas.slice(0, 10),
+                datasets: [
+                  {
+                    label: "Valor",
+                    data: valores.slice(0, 10), // Mostrar solo 10 valores
+                    borderWidth: 1,
+                    borderColor: "blue",
+                    fill: false,
+                  },
+                ],
+              },
+              options: {
+                scales: {
+                  y: {
+                    suggestedMin: Math.min(...valores) - 50,
+                    suggestedMax: Math.max(...valores) + 50,
+                  },
+                },
+              },
+            });
+          })
+          .catch((error) => {
+            console.error("Error al obtener los datos de la API:", error);
+          });
+      });
+    </script>
+  </body>
+</html>
